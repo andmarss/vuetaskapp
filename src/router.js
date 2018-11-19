@@ -1,6 +1,13 @@
 import Vue from "vue";
 import Router from "vue-router";
-import Home from "./views/Home.vue";
+import Main from "./views/Main.vue";
+
+import Web from './views/Web.vue';
+import Seo from './views/Seo.vue';
+import Mobile from './views/Mobile.vue';
+import Ppc from './views/Ppc.vue';
+import Smm from './views/Smm.vue';
+import Dc from './views/Dc.vue';
 
 Vue.use(Router);
 
@@ -8,19 +15,34 @@ export default new Router({
   mode: "history",
   base: process.env.BASE_URL,
   routes: [
-    {
-      path: "/",
-      name: "home",
-      component: Home
-    },
-    {
-      path: "/about",
-      name: "about",
-      // route level code-splitting
-      // this generates a separate chunk (about.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () =>
-        import(/* webpackChunkName: "about" */ "./views/About.vue")
-    }
+      {
+        path: "/",
+        name: "main",
+        component: Main
+      },
+      {
+        path: '/web',
+        component: Web
+      },
+      {
+          path: '/seo',
+          component: Seo
+      },
+      {
+          path: '/mobile',
+          component: Mobile
+      },
+      {
+          path: '/ppc',
+          component: Ppc
+      },
+      {
+          path: '/smm',
+          component: Smm
+      },
+      {
+          path: '/dc',
+          component: Dc
+      }
   ]
 });
