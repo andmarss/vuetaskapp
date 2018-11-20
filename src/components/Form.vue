@@ -1,33 +1,55 @@
 <template>
     <section class="contacts">
         <div class="container" v-if="!submitted">
-            <h2 class="title title-with-lines">Контакты</h2>
+            <h2 class="title title-with-lines" v-if="showTitle">Контакты</h2>
             <p class="contacts__paragraph">Оставьте свои контактные данные, и наш менеджер свяжется с Вами.</p>
             <div class="wrapper">
+                <div class="notification is-danger" v-if="showDanger">
+                    <button class="delete" @click="hideError()"></button>
+                    <p v-if="errorText.length === 0">
+                        Не заполнены обязательные поля: <span v-for="(field, index) in emptyFields">{{(index === emptyFields.length-1) ? field : `${field}, `}}</span>
+                    </p>
+                    <p v-else>
+                        {{errorText}}
+                    </p>
+                </div>
+            </div>
+            <div class="wrapper">
                 <div class="contacts-left">
-                    <input type="text" class="input form__input" v-model="message.fromName" placeholder="Имя">
-                    <input type="email" class="input form__input" v-model="message.fromEmail" placeholder="Email">
-                    <input type="tel" class="input form__input" v-model="message.fromTelephone" placeholder="Номер телефона">
+                    <input type="text" :class="showDanger ? 'input form__input error' : 'input form__input'" @blur="hideError()" v-model="message.fromName" placeholder="Имя">
+                    <input type="email" :class="showDanger ? 'input form__input error' : 'input form__input'" @blur="hideError()" v-model="message.fromEmail" placeholder="Email">
+                    <vue-tel-input ref="input" v-model="message.fromTelephone" @onInput="checkPhone" @onBlur="hideError()" :preferredCountries="['ru', 'ua']" placeholder="Номер телефона">
+                    </vue-tel-input>
                 </div>
                 <div class="contacts-right">
-                    <textarea rows="4" class="input form__input contacts__textarea" v-model="message.fromMessage" placeholder="Текст сообщения"></textarea>
+                    <textarea rows="4" :class="showDanger ? 'input form__input error' : 'input form__input'" @blur="hideError()" v-model="message.fromMessage" placeholder="Текст сообщения"></textarea>
                     <button class="btn contacts__btn" @click.prevent="postMessage">Отправить</button>
                 </div>
             </div>
         </div>
+        <div class="transparent" v-if="showLoader"></div>
         <div class="loader" v-if="showLoader">
             <img src="../assets/loader.gif" alt="">
         </div>
         <div class="container" v-if="submitted">
             <h2 class="title title--success">Ваше сообщение отправлено!</h2>
-            <h4 class="little-title title--success transparent">Очень скоро наш менеджер Вам позвонит</h4>
+            <h4 class="little-title title--success">Очень скоро наш менеджер Вам позвонит</h4>
             <button class="btn contacts__btn" style="max-width: 250px;" @click.prevent="submitted = false">Отправить еще</button>
         </div>
     </section>
 </template>
 
 <script>
+    import VueTelInput from 'vue-tel-input';
+
     export default {
+        props: {
+            showTitle: {
+                types: Boolean,
+                default: true
+            }
+        },
+
         data(){
             return {
                 message: {
@@ -37,13 +59,58 @@
                     fromMessage: ''
                 },
                 submitted: false,
-                showLoader: false
+                showLoader: false,
+                errorText: '',
+                emptyFields: [],
+                validPhone: false
             }
         },
         methods: {
             postMessage(){
-                this.showLoader = true;
 
+                this.errorText = '';
+
+                this.emptyFields = Object.keys(this.message).filter(key => {
+                    return this.message[key].length === 0;
+                });
+
+                // Если на форме есть не заполненные поля - говорим об этом
+                if (this.emptyFields.length > 0) {
+
+                    this.emptyFields = this.emptyFields.map(field => {
+                        if (field === 'fromEmail') {
+                            return '"Email"';
+                        } else if (field === 'fromTelephone') {
+                            return '"Номер телефона"';
+                        } else if (field === 'fromName') {
+                            return '"Имя"';
+                        } else if (field === 'fromMessage') {
+                            return '"Текст сообщения"';
+                        }
+                    });
+
+                    this.showError();
+
+                    return;
+
+                }
+                // проверяем email на валидность
+                if(!this.checkEmail()){
+                    this.errorText = `Введен невалидный email-адрес.`;
+                    this.showError();
+
+                    return;
+                }
+                // проверяем на валидность телефон
+                if(!this.validPhone) {
+                    this.errorText = `Введен невалидный номер телефона.`;
+                    this.showError();
+
+                    return;
+                }
+                // если все ок - имитируем отправку формы
+                this.showLoader = true;
+                // а через 5 сек. показываем, что все успешно!
                 setTimeout(() => {
                     this.showLoader = false;
                     this.submitted = true;
@@ -52,14 +119,48 @@
                     this.message.fromTelephone = '';
                     this.message.fromMessage = '';
                 }, 5000)
+            },
+
+            checkEmail(){
+                return /[a-z0-9]+\@\w+\.\w{1,5}/ig.test(this.message.fromEmail);
+            },
+
+            checkPhone({ number, isValid, country }){
+                this.validPhone = isValid;
+            },
+
+            showError(){
+                this.$refs.input.$el.classList.remove('error');
+
+                this.$refs.input.$el.classList.add('error');
+
+                this.$store.dispatch('changeDanger', true);
+            },
+
+            hideError(){
+                this.$refs.input.$el.classList.remove('error');
+                this.errorText = '';
+                this.emptyFields = [];
+                this.$store.dispatch('changeDanger', false);
             }
         },
-        mounted(){},
-        computed: {}
+        mounted(){
+            console.log();
+        },
+        computed: {
+            showDanger(){
+                return this.$store.getters.showDanger
+            }
+        },
+        components: {
+            'vue-tel-input': VueTelInput
+        }
     }
 </script>
 
 <style scoped lang="scss">
+    @import "~vue-tel-input/dist/vue-tel-input.css";
+
     .contacts {
         position: relative;
     }
@@ -222,10 +323,126 @@
             outline: none;
             border: 1px solid #00BC8C;
         }
+
+        &.error {
+            border: 1px solid #ff3860;
+
+            &:focus {
+                outline: none;
+                border: 1px solid #ff3860;
+            }
+        }
     }
 
     .title--success {
         margin-top: 30px;
         margin-bottom: 15px;
+    }
+
+    .transparent {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(#000, .3);
+    }
+    
+    .is-danger {
+        position: relative;
+        background-color: #ff3860;
+        color: #fff;
+        padding: 20px;
+        border-radius: 4px;
+        font-size: 14px;
+        margin-bottom: 20px;
+        
+        p {
+            color: #fff;
+        }
+    }
+
+    .delete {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+        background-color: rgba(10,10,10,.2);
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        border: none;
+        cursor: pointer;
+        transition: background-color .5s ease;
+
+        &:hover {
+            background-color: rgba(10,10,10,.5);
+        }
+
+        &:before, &:after {
+            background-color: #fff;
+            content: "";
+            display: block;
+            left: 50%;
+            position: absolute;
+            top: 50%;
+            -webkit-transform: translateX(-50%) translateY(-50%) rotate(45deg);
+            transform: translateX(-50%) translateY(-50%) rotate(45deg);
+            -webkit-transform-origin: center center;
+            transform-origin: center center;
+        }
+
+        &:before {
+            height: 2px;
+            width: 50%;
+        }
+
+        &:after {
+            height: 50%;
+            width: 2px;
+        }
+    }
+
+    .vue-tel-input {
+        border-radius: 4px;
+        margin-right: 0;
+        font-size: 1rem;
+        box-shadow: inset 0 5px 12px -15px rgba(0,0,0,0.89);
+        border: 1px solid #ccc;
+        transition: border .5s;
+        padding: 4px 0;
+
+        &.error {
+            border: 1px solid #ff3860;
+
+            &:focus {
+                outline: none;
+                border: 1px solid #ff3860;
+            }
+        }
+
+        &:focus {
+            outline: none;
+            border: 1px solid #00BC8C;
+        }
+
+        &.error {
+            border: 1px solid #ff3860;
+
+            &:focus {
+                outline: none;
+                border: 1px solid #ff3860;
+            }
+        }
+    }
+
+    @media screen and (max-width: 640px) {
+        .contacts-left, .contacts-right {
+            width: 100%;
+        }
+
+        .contacts-left {
+            margin-right: 0;
+            margin-bottom: 20px;
+        }
     }
 </style>

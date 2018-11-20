@@ -26,10 +26,6 @@
 </script>
 
 <style scoped lang="scss">
-    header {
-        display: none;
-    }
-
     .container {
         position: relative;
         padding-top: 116px;

@@ -5,7 +5,6 @@
                 <h1 class="big-image__title">Бренд №1</h1>
                 <h3><span class="rotate">{{ txt }}</span></h3>
                 <p>Мы лучшие в своем деле</p>
-                <!--<button class="btn big-image__btn">Написать</button>-->
             </div>
         </div>
     </section>
@@ -40,13 +39,13 @@
                 }
 
                 let delta = 300 - Math.random() * 100;
-
+                // если удаление - удаляем текст в 3 раза быстрее
                 if(this.isDeleting) delta = delta / 3;
-
+                // текст набран полностью - пришло время его удалить
                 if(!this.isDeleting && this.txt === text) {
                     delta = this.period;
                     this.isDeleting = true;
-                } else if (this.isDeleting && this.txt === '') {
+                } else if (this.isDeleting && this.txt === '') { // текст удален - печатаем новый
                     this.isDeleting = false;
                     this.loopNum++;
                     delta = 500;
@@ -58,6 +57,7 @@
 
             move(){
                 let image = this.$refs.image;
+                // добавляем эффект параллакса
                 image.addEventListener('mousemove', e => {
                     let height = 10 / window.innerHeight;
                     let width = 10 / window.innerWidth;

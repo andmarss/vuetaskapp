@@ -64,22 +64,17 @@
 
     export default {
         data(){
-            return {
-                options: {
-                    nextLabel: `<span class="carousel-next">▶</span>`,
-                    prevLabel: `<span class="carousel-prev">◀</span>`
-                }
-            }
+            return {}
         },
         methods: {
             slide(value){
                 const carousel = this.$refs['carousel'];
                 const currentPage = carousel.currentPage;
                 const pageCount = carousel.pageCount;
-
+                // если нажали на .carousel-prev
                 if (value === 'prev') {
                     currentPage !== 0 ? carousel.goToPage(currentPage - 1) : false;
-                } else {
+                } else { // нажали на .carousel-next
                     currentPage < pageCount - 1 ? carousel.goToPage(currentPage + 1) : false;
                 }
             }
@@ -105,7 +100,7 @@
             top: 50%;
             cursor: pointer;
             color: #fff;
-            z-index: 1000;
+            z-index: 10;
             margin-top: -8px;
         }
 
@@ -172,6 +167,12 @@
 
         &.carousel-slide-dc {
             background-image: url("../../assets/dc.jpg");
+        }
+    }
+
+    @media screen and (max-width: 480px) {
+        .carousel-next, .carousel-prev {
+            display: none;
         }
     }
 </style>

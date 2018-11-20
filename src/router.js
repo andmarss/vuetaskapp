@@ -1,6 +1,8 @@
 import Vue from "vue";
 import Router from "vue-router";
 import Main from "./views/Main.vue";
+import About from "./views/About.vue";
+import Contact from "./views/Contact.vue";
 
 import Web from './views/Web.vue';
 import Seo from './views/Seo.vue';
@@ -43,6 +45,14 @@ export default new Router({
       {
           path: '/dc',
           component: Dc
+      },
+      {
+          path: '/about',
+          component: About
+      },
+      {
+          path: '/contact',
+          component: Contact
       }
   ]
 });
