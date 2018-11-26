@@ -16,13 +16,14 @@
             </div>
             <div class="wrapper">
                 <div class="contacts-left">
-                    <input type="text" :class="showDanger ? 'input form__input error' : 'input form__input'" @blur="hideError()" v-model="message.fromName" placeholder="Имя">
-                    <input type="email" :class="showDanger ? 'input form__input error' : 'input form__input'" @blur="hideError()" v-model="message.fromEmail" placeholder="Email">
-                    <vue-tel-input ref="input" v-model="message.fromTelephone" @onInput="checkPhone" @onBlur="hideError()" :preferredCountries="['ru', 'ua']" placeholder="Номер телефона">
+                    <input type="text" :class="showDanger ? 'input form__input error' : 'input form__input'" @blur="blurName()" v-model="message.fromName" placeholder="Имя">
+                    <input type="email" :class="showDanger ? 'input form__input error' : 'input form__input'" @blur="blurEmail();" v-model="message.fromEmail" placeholder="Email">
+                    <vue-tel-input ref="input" v-model="message.fromTelephone" @onInput="checkPhone" @onBlur="blurPhone" :preferredCountries="['ru', 'ua']" placeholder="Номер телефона">
                     </vue-tel-input>
                 </div>
                 <div class="contacts-right">
-                    <textarea rows="4" :class="showDanger ? 'input form__input error' : 'input form__input'" @blur="hideError()" v-model="message.fromMessage" placeholder="Текст сообщения"></textarea>
+                    <textarea rows="4" :class="(showDanger || showMessageError) ? 'input form__input error' : 'input form__input'" @input="checkMessage()" @blur="hideError()" v-model="message.fromMessage" placeholder="Текст сообщения"></textarea>
+                    <p style="text-align: left; margin-bottom: 20px;" v-if="showCounter">Осталось: {{ message.fromMessageLeft - message.fromMessage.length }}</p>
                     <button class="btn contacts__btn" @click.prevent="postMessage">Отправить</button>
                 </div>
             </div>
@@ -56,7 +57,8 @@
                     fromName: '',
                     fromEmail: '',
                     fromTelephone: '',
-                    fromMessage: ''
+                    fromMessage: '',
+                    fromMessageLeft: 250
                 },
                 submitted: false,
                 showLoader: false,
@@ -142,6 +144,43 @@
                 this.errorText = '';
                 this.emptyFields = [];
                 this.$store.dispatch('changeDanger', false);
+            },
+
+            checkMessage(){
+                this.message.fromMessage = ((this.message.fromMessageLeft - this.message.fromMessage.length) === 0 || (this.message.fromMessageLeft - this.message.fromMessage.length) < 0) ? this.message.fromMessage.slice(0,250) : this.message.fromMessage;
+            },
+
+            blurEmail(){
+                this.hideError();
+
+                if(this.message.fromEmail.length > 0 && !this.checkEmail()) {
+                    this.errorText = `Введен невалидный email-адрес.`;
+                    this.showError();
+
+                    return;
+                }
+            },
+
+            blurPhone(){
+                this.hideError();
+
+                if(!this.validPhone) {
+                    this.errorText = `Введен невалидный номер телефона.`;
+                    this.showError();
+
+                    return;
+                }
+            },
+
+            blurName(){
+                this.hideError();
+
+                if(this.message.fromName.length > 0 && this.message.fromName.length < 3) {
+                    this.errorText = `Поле имени должно содержать не менее 3-х символов.`;
+                    this.showError();
+
+                    return;
+                }
             }
         },
         mounted(){
@@ -150,6 +189,14 @@
         computed: {
             showDanger(){
                 return this.$store.getters.showDanger
+            },
+
+            showCounter(){
+                return (this.message.fromMessageLeft - this.message.fromMessage.length) < 250;
+            },
+
+            showMessageError(){
+                return (this.message.fromMessageLeft - this.message.fromMessage.length) === 0 || (this.message.fromMessageLeft - this.message.fromMessage.length) < 0;
             }
         },
         components: {
@@ -159,8 +206,6 @@
 </script>
 
 <style scoped lang="scss">
-    @import "~vue-tel-input/dist/vue-tel-input.css";
-
     .contacts {
         position: relative;
     }
@@ -347,7 +392,7 @@
         height: 100%;
         background-color: rgba(#000, .3);
     }
-    
+
     .is-danger {
         position: relative;
         background-color: #ff3860;
@@ -356,7 +401,7 @@
         border-radius: 4px;
         font-size: 14px;
         margin-bottom: 20px;
-        
+
         p {
             color: #fff;
         }
